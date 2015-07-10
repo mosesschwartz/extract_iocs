@@ -96,8 +96,12 @@ def _extract_iocs(text, confidence_modifier=0, already_found_hashes=()):
 
     # ipv4
     for m in re.finditer(ipv4_regex, text):
-        result = m.string[m.start():m.end()]
-        iocs['ipv4'].append(result)
+        ip = m.string[m.start():m.end()]
+        # strip brackets:
+        ip = ip.replace('[', '').replace(']', '')
+        # strip leading 0s:
+        ip = '.'.join([str(int(x)) for x in ip.split('.')])
+        iocs['ipv4'].append(ip)
 
     # domain
     for m in re.finditer(domain_regex, text):
@@ -115,7 +119,7 @@ def _extract_iocs(text, confidence_modifier=0, already_found_hashes=()):
             # followed by slash or colon? confidence++
             confidence += 10
         if m.string[m.end()-2:m.end()+1] in ['tmp', 'cab', 'htm', 'cgi', 'asp',
-                                             'gif', 'jpg', 'doc', 'php']:
+                                             'gif', 'jpg', 'doc', 'php', 'png']:
             # wait, are these file names?
             confidence -= 5
         if m.string[m.end()-3:m.end()] in ['zip', 'mov']:
