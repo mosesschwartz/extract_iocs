@@ -5,6 +5,12 @@ Extract IOCs (domain, IP, email,hashes) from text.
 
 import re
 
+from cybox import helper
+from cybox.core import Observables
+import stix.utils
+from stix.indicator import Indicator
+from stix.core import STIXPackage, STIXHeader
+
 """
 TLDs taken from http://data.iana.org/TLD/tlds-alpha-by-domain.txt
 on 30 June 2015
@@ -177,3 +183,44 @@ def export_csv(iocs):
         for ioc in ioc_list:
             output += '"' + ioc + '", ' + ioc_type + '\n'
     return output
+
+def export_cybox(iocs):
+    '''export to cybox observables document'''
+    domain_fn = helper.create_domain_name_observable
+    ipv4_fn = helper.create_ipv4_observable
+    email_fn = helper.create_email_address_observable
+    hash_fn = helper.create_file_hash_observable
+
+    observables = [domain_fn(o) for o in iocs['domain']] + \
+                  [ipv4_fn(o) for o in iocs['ipv4']] + \
+                  [email_fn(o) for o in iocs['email']] + \
+                  [hash_fn('', o)
+                   for o in iocs['md5']+iocs['sha1']+iocs['sha256']]
+
+    cybox_observables = Observables(observables)
+    return cybox_observables
+
+def export_cybox_xml(iocs):
+    return export_cybox(iocs).to_xml()
+
+def export_stix(iocs):
+    '''Export to STIX. Adapted from:
+        github.com/STIXProject/openioc-to-stix/blob/master/openioc_to_stix.py
+    '''
+    cybox_observables = export_cybox(iocs)
+    stix_package = STIXPackage()
+    for obs in cybox_observables:
+        indicator_dict = {}
+        producer_dict = {}
+        producer_dict['tools'] = [{'name':'extract_iocs'}]
+        indicator_dict['producer'] = producer_dict
+        indicator_dict['title'] = "extract_iocs STIX export"
+        indicator = Indicator.from_dict(indicator_dict)
+        indicator.add_observable(obs)
+        stix_package.add_indicator(indicator)
+    # Create and write the STIX Header
+    stix_header = STIXHeader()
+    stix_header.package_intent = "Indicators - Malware Artifacts"
+    stix_header.description = "CybOX-represented Indicators extracted with extract_iocs"
+    stix_package.stix_header = stix_header
+    return stix_package.to_xml()
