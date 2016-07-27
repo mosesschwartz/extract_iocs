@@ -12,20 +12,27 @@ from os import path
 
 here = path.abspath(path.dirname(__file__))
 
-# Get the long description from the relevant file
-with open(path.join(here, 'README.md'), encoding='utf-8') as f:
-    long_description = f.read()
-
 setup(
     name='extract_iocs',
 
     # Versions should comply with PEP440.  For a discussion on single-sourcing
     # the version across setup.py and the project code, see
     # https://packaging.python.org/en/latest/single_source_version.html
-    version='2.0.0',
+    version='2.0.1',
 
     description='Extracts indicators of compromise (IOCs), including domain names, IPv4 addresses, email addresses, and hashes, from text.',
-    long_description=long_description,
+    long_description='''extract_iocs is a Python module that extracts indicators of compromise (IOCs),
+including domain names, IPv4 addresses, email addresses, and hashes, from
+text. It uses some huge and ugly regexes, has special handling to identify
+domain names with a relatively low false-positive rate, and does some magic to
+try to extract IOCs across line breaks.
+
+This script was inspired by and initially based on Stephen Brannon's
+IOCextractor (https://github.com/stephenbrannon/IOCextractor), but turned into
+a complete rewrite. extract_iocs provides no GUI and does not support any kind
+of analyst workflow. It is intended to be used for triage or automation
+purposes where a relatively high FP rate (as well as the occational false
+negative) are acceptable.''',
 
     # The project's main homepage.
     url='https://github.com/mosesschwartz/extract_iocs',
