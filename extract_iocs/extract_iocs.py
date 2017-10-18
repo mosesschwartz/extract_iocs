@@ -69,28 +69,28 @@ def _extract_iocs(text, confidence_modifier=0):
     already_found_hashes = list()
 
     # sha256
-    for m in re.finditer(sha256_regex, text):
-        h = m.string[m.start():m.end()].upper()
+    for match in re.finditer(sha256_regex, text):
+        h = match.string[match.start():match.end()].upper()
         if not already_found(h, already_found_hashes):
             iocs['sha256'].append(h)
             already_found_hashes.append(h)
 
     # sha1
-    for m in re.finditer(sha1_regex, text):
-        h = m.string[m.start():m.end()].upper()
+    for match in re.finditer(sha1_regex, text):
+        h = match.string[match.start():match.end()].upper()
         if not already_found(h, already_found_hashes):
             iocs['sha1'].append(h)
             already_found_hashes.append(h)
 
     # md5
-    for m in re.finditer(md5_regex, text):
-        h = m.string[m.start():m.end()].upper()
+    for match in re.finditer(md5_regex, text):
+        h = match.string[match.start():match.end()].upper()
         if not already_found(h, already_found_hashes):
             iocs['md5'].append(h)
 
     # ipv4
-    for m in re.finditer(ipv4_regex, text):
-        ip = m.string[m.start():m.end()]
+    for match in re.finditer(ipv4_regex, text):
+        ip = match.string[match.start():match.end()]
         # strip brackets:
         ip = ip.replace('[', '').replace(']', '')
         # strip leading 0s:
@@ -98,39 +98,39 @@ def _extract_iocs(text, confidence_modifier=0):
         iocs['ipv4'].append(ip)
 
     # domain
-    for m in re.finditer(domain_regex, text):
+    for match in re.finditer(domain_regex, text):
         confidence = 0 + confidence_modifier
-        if '[.]' in m.string[m.start():m.end()]:
+        if '[.]' in match.string[match.start():match.end()]:
             # brackets around .s is a VERY strong signal...
             confidence += 20
-        if '://' in m.string[m.start()-3:m.start()]:
+        if '://' in match.string[match.start() - 3:match.start()]:
             # if there's a :// before the match, we're pretty sure
             confidence += 10
-        if m.string[m.start()-7:m.start()-3] in ['ttp', 'tps', 'ftp']:
+        if match.string[match.start() - 7:match.start() - 3] in ['ttp', 'tps', 'ftp']:
             # if there's something like http(s) or ftp, confidence++
             confidence += 10
-        if m.string[m.end():m.end()+1] in ['/', ':']:
+        if match.string[match.end():match.end() + 1] in ['/', ':']:
             # followed by slash or colon? confidence++
             confidence += 10
-        if m.string[m.end()-2:m.end()+1] in ['tmp', 'cab', 'htm', 'cgi', 'asp',
+        if match.string[match.end() - 2:match.end() + 1] in ['tmp', 'cab', 'htm', 'cgi', 'asp',
                                              'gif', 'jpg', 'doc', 'php', 'png']:
             # wait, are these file names?
             confidence -= 5
-        if m.string[m.end()-3:m.end()] in ['zip', 'mov']:
+        if match.string[match.end() - 3:match.end()] in ['zip', 'mov']:
             # okay, these are legit, but it might be a file name....
             confidence -= 5
-        if '@' in m.string[m.start()-1:m.start()]:
+        if '@' in match.string[match.start() - 1:match.start()]:
             # looks like an email address!
             confidence += 10
-        if m.end()-m.start() < 9:
+        if match.end() - match.start() < 9:
             # unusually short...
             confidence -= 5
         if confidence >= 0:
-            iocs['domain'].append(m.string[m.start():m.end()].replace('[','').replace(']',''))
+            iocs['domain'].append(match.string[match.start():match.end()].replace('[','').replace(']',''))
 
     # email
-    for m in re.finditer(email_regex, text):
-        iocs['email'].append(m.string[m.start():m.end()].replace('[','').replace(']',''))
+    for match in re.finditer(email_regex, text):
+        iocs['email'].append(match.string[match.start():match.end()].replace('[','').replace(']',''))
 
     # Remove duplicates
     for ioc_type, ioc_list in iocs.items():
