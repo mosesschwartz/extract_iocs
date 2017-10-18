@@ -12,7 +12,6 @@ import re
 from .utility import calculate_domain_score
 
 indicator_regexes = dict()
-indicator_order = list()
 
 
 def _load_regexes(regex_file_path):
@@ -21,6 +20,13 @@ def _load_regexes(regex_file_path):
     # read the config file
     with open(regex_file_path) as f:
         config.readfp(f)
+
+    # keep track of indicator orders
+    temp_indicator_order = {}
+    unordered_types = list()
+
+    # initialize the indicator order
+    indicator_order = ['' for section in config.sections()]
 
     for ind_type in config.sections():
         try:
@@ -42,11 +48,24 @@ def _load_regexes(regex_file_path):
         try:
             ind_order = config.get(ind_type, 'order')
         except ConfigParser.NoOptionError as e:
-            # add the indicator type
-            indicator_order.append(ind_type)
+            # add the indicator type without an order
+            unordered_types.append(ind_type)
         else:
-            # insert the indicator type at the proper index
-            indicator_order.insert(int(ind_order), ind_type)
+            # keep track of the index at which the indicator type should be parsed
+            temp_indicator_order[ind_type] = int(ind_order)
+
+    # add all of the ordered indicator types
+    for indicator_type in temp_indicator_order:
+        indicator_order[temp_indicator_order[indicator_type]] = indicator_type
+    # add all of the unordered indicator types
+    indicator_order.extend(unordered_types)
+    # remove any blank entries
+    indicator_order = [order for order in indicator_order if order != '']
+    return indicator_order
+
+
+# load the regexes
+indicator_order = _load_regexes(os.path.abspath(os.path.join(os.path.dirname(__file__), "./data/regexes.ini")))
 
 
 def extract_iocs(text, confidence_modifier=0):
@@ -124,7 +143,3 @@ def _extract_iocs(text, confidence_modifier):
     for ioc_type, ioc_list in iocs.items():
         iocs[ioc_type] = list(set(ioc_list))
     return iocs
-
-
-# load the regexes
-_load_regexes(os.path.abspath(os.path.join(os.path.dirname(__file__), "./data/regexes.ini")))
