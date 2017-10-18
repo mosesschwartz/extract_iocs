@@ -1,0 +1,11 @@
+bad@gmail.org
+E2021791428601AD12B9230B9ACE4F21
+https://example.com
+example.org
+ftp://example.com
+2011201120112012201220122012201220122013201320132013201320132013
+http://example.com/test/bingo.php
+B2021791428601AD12B9230B9ACE4F219ACE4F21
+1.2.3.4
+http://example.com
+example.com
