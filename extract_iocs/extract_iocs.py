@@ -28,6 +28,7 @@ ipv4_regex = '(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.|\[\.\])){3}(?:25[0-
 domain_regex = '((?=[a-z0-9-]{1,63}(\.|\[\.\]))(xn--)?[a-z0-9]+(-[a-z0-9]+)*(\.|\[\.\]))+('+TLDs+')'
 email_regex = '[a-z0-9(\.|\[\.\])_%+-]+(@|\[@\])'+domain_regex
 
+
 def extract_iocs(text):
     '''Extract IOCs from input text. Returns a dict:
         {'md5' : ['list of MD5s'],
@@ -39,15 +40,8 @@ def extract_iocs(text):
     '''
     text = text.lower() # convert to lower case for simplicity
     iocs = _extract_iocs(text)
-    text = text.replace('\r\n','') # now strip newlines!
-    text = text.replace('\n','') # then see what we get...
-    no_line_breaks_iocs = _extract_iocs(text,
-        confidence_modifier=-1,
-        already_found_hashes=iocs['md5']+iocs['sha1']+iocs['sha256'])
-    for ioc_type in iocs: # then combine both
-        iocs[ioc_type] += no_line_breaks_iocs[ioc_type]
-        iocs[ioc_type] = list(set(iocs[ioc_type]))
     return iocs
+
 
 def already_found(h, already_found_hashes):
     '''
@@ -63,16 +57,16 @@ def already_found(h, already_found_hashes):
         return True
 
 
-def _extract_iocs(text, confidence_modifier=0, already_found_hashes=()):
-    iocs = {'md5' : [],
-            'sha1' : [],
-            'sha256' : [],
-            'ipv4' : [],
-            'url' : [],
-            'domain' : [],
-            'email' : []}
+def _extract_iocs(text, confidence_modifier=0):
+    iocs = {'md5': [],
+            'sha1': [],
+            'sha256': [],
+            'ipv4': [],
+            'url': [],
+            'domain': [],
+            'email': []}
 
-    already_found_hashes = list(already_found_hashes)
+    already_found_hashes = list()
 
     # sha256
     for m in re.finditer(sha256_regex, text):
