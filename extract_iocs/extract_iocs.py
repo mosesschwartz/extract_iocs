@@ -12,6 +12,7 @@ import re
 from .utility import calculate_domain_score
 
 indicator_regexes = dict()
+removed_indicator_types = list()
 
 
 def _load_regexes(regex_file_path):
@@ -53,6 +54,15 @@ def _load_regexes(regex_file_path):
         else:
             # keep track of the index at which the indicator type should be parsed
             temp_indicator_order[ind_type] = int(ind_order)
+
+        # check to see if this kind of indicator should be removed once it is found
+        try:
+            remove = config.get(ind_type, 'remove')
+        except ConfigParser.NoOptionError as e:
+            pass
+        else:
+            if remove:
+                removed_indicator_types.append(ind_type)
 
     # add all of the ordered indicator types
     for indicator_type in temp_indicator_order:
@@ -110,7 +120,6 @@ def _extract_iocs(text, confidence_modifier):
     already_found_hashes = list()
 
     for indicator_type in indicator_order:
-        print("indicator type: {}".format(indicator_type))
         # parse all of the indicators of the given type from the text
         for match in re.finditer(indicator_regexes[indicator_type], text):
             # handle file hashes
@@ -138,6 +147,10 @@ def _extract_iocs(text, confidence_modifier):
                 pass
             else:
                 print("Unknown indicator type: {}".format(indicator_type))
+
+            # if appropriate, remove the indicator from the text
+            if indicator_type in removed_indicator_types:
+                text = text.replace(match.string[match.start():match.end()], "")
 
     # Remove duplicates
     for ioc_type, ioc_list in iocs.items():
