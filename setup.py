@@ -91,7 +91,7 @@ negative) are acceptable.''',
     # If there are data files included in your packages that need to be
     # installed, specify them here.  If using Python 2.6 or less, then these
     # have to be included in MANIFEST.in as well.
-    package_data={},
+    package_data={'extract_iocs': ['data/*',]},
 
     # Although 'package_data' is the preferred approach, in some case you may
     # need to place data files outside of your packages. See:
