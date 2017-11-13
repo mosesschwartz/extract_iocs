@@ -22,12 +22,8 @@ def _load_regexes(regex_file_path):
     with open(regex_file_path) as f:
         config.readfp(f)
 
-    # keep track of indicator orders
-    temp_indicator_order = {}
-    unordered_types = list()
-
     # initialize the indicator order
-    indicator_order = ['' for section in config.sections()]
+    indicator_order = list()
 
     for ind_type in config.sections():
         try:
@@ -42,18 +38,12 @@ def _load_regexes(regex_file_path):
             if ind_type == 'email':
                 ind_pattern = ind_pattern + config.get('domain', 'regex')
 
+            # compile the regex for the current indicator type
             ind_regex = re.compile(ind_pattern)
+            # keep track of the regex for this indicator type
             indicator_regexes[ind_type] = ind_regex
-
-        # track the indicator_order
-        try:
-            ind_order = config.get(ind_type, 'order')
-        except ConfigParser.NoOptionError as e:
-            # add the indicator type without an order
-            unordered_types.append(ind_type)
-        else:
-            # keep track of the index at which the indicator type should be parsed
-            temp_indicator_order[ind_type] = int(ind_order)
+            # keep track of the indicator type so that indicators are parsed in the same order that the regexes are listed in regexes.ini
+            indicator_order.append(ind_type)
 
         # check to see if this kind of indicator should be removed once it is found
         try:
@@ -64,13 +54,6 @@ def _load_regexes(regex_file_path):
             if remove:
                 removed_indicator_types.append(ind_type)
 
-    # add all of the ordered indicator types
-    for indicator_type in temp_indicator_order:
-        indicator_order[temp_indicator_order[indicator_type]] = indicator_type
-    # add all of the unordered indicator types
-    indicator_order.extend(unordered_types)
-    # remove any blank entries
-    indicator_order = [order for order in indicator_order if order != '']
     return indicator_order
 
 
